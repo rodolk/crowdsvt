@@ -1,0 +1,67 @@
+efsneoifoewnfOIEWFWEF;KWfeknwef;lkwnef;knwekf;lkwnef
+package main
+
+import (
+	"bytes"
+	"fmt"
+	"io"
+	"log"
+	"net/http"
+	"os"
+)
+
+const getURL = "https://mgaeogoxuc.execute-api.us-west-2.amazonaws.com/default/vtSignURL"
+
+func main() {
+	resp, err := http.Get(getURL)
+	if err != nil {
+		log.Fatalf("Failed to send GET request: %v", err)
+	}
+	defer resp.Body.Close()
+
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		log.Fatalf("Failed to read response body: %v", err)
+	}
+
+	log.Println(string(bodyBytes))
+
+	putURL := string(bodyBytes) // Assuming the entire body is the URL, adjust as necessary
+
+	filename := "test.txt"
+	var fileBytes []byte
+
+	file, err := os.Open(filename)
+	if err != nil {
+		log.Fatalf("Couldn't open file %v to upload. Here's why: %v\n", filename, err)
+		os.Exit(1)
+	} else {
+		defer file.Close()
+		fileBytes, err = io.ReadAll(file)
+		if err != nil {
+			log.Fatalf("Couldn't read file %v. Here's why: %v\n", filename, err)
+			os.Exit(1)
+		}
+	}
+
+	// 3. Send a PUT request to the obtained URL
+	putData := bytes.NewBuffer(fileBytes) // Replace with your actual PUT data
+	putResp, err := http.NewRequest(http.MethodPut, putURL, putData)
+	if err != nil {
+		log.Fatalf("Failed to create PUT request: %v", err)
+	}
+
+	client := &http.Client{}
+	response, err := client.Do(putResp)
+	if err != nil {
+		log.Fatalf("Failed to send PUT request: %v", err)
+	}
+	defer response.Body.Close()
+
+	// Optional: Print out the PUT response
+	putRespBody, _ := io.ReadAll(response.Body)
+	fmt.Println(string(putRespBody))
+}
+
+
+
